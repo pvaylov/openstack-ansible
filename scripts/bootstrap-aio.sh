@@ -44,11 +44,25 @@ export NEUTRON_FATAL_DEPRECATIONS=${NEUTRON_FATAL_DEPRECATIONS:-"no"}
 export NOVA_FATAL_DEPRECATIONS=${NOVA_FATAL_DEPRECATIONS:-"no"}
 export TEMPEST_FATAL_DEPRECATIONS=${TEMPEST_FATAL_DEPRECATIONS:-"no"}
 
-# Ubuntu Repository Determination (based on existing host OS configuration)
-UBUNTU_RELEASE=$(lsb_release -sc)
-UBUNTU_REPO=${UBUNTU_REPO:-$(awk "/^deb .*ubuntu\/? ${UBUNTU_RELEASE} main/ {print \$2; exit}" /etc/apt/sources.list)}
-UBUNTU_SEC_REPO=${UBUNTU_SEC_REPO:-$(awk "/^deb .*ubuntu\/? ${UBUNTU_RELEASE}-security main/ {print \$2; exit}" /etc/apt/sources.list)}
+# Determine OS platform
+UNAME=$(uname | tr "[:upper:]" "[:lower:]")
+# If Linux, try to determine specific distribution
+if [ "$UNAME" == "linux" ]; then
+    # If available, use LSB to identify distribution
+    if [ -f /etc/lsb-release -o -d /etc/lsb-release.d ]; then
+        export DISTRO=$(lsb_release -i | cut -d: -f2 | sed s/'^\t'//)
+    # Otherwise, use release info file
+    else
+        export DISTRO=$(ls -d /etc/[A-Za-z]*[_-][rv]e[lr]* | grep -v "lsb" | cut -d'/' -f3 | cut -d'-' -f1 | cut -d'_' -f1)
+    fi
+fi
 
+if [ "$DISTRO" == "Ubuntu" ]; then
+   # Ubuntu Repository Determination (based on existing host OS configuration)
+   UBUNTU_RELEASE=$(lsb_release -sc)
+   UBUNTU_REPO=${UBUNTU_REPO:-$(awk "/^deb .*ubuntu\/? ${UBUNTU_RELEASE} main/ {print \$2; exit}" /etc/apt/sources.list)}
+   UBUNTU_SEC_REPO=${UBUNTU_SEC_REPO:-$(awk "/^deb .*ubuntu\/? ${UBUNTU_RELEASE}-security main/ {print \$2; exit}" /etc/apt/sources.list)}
+fi
 
 ## Library Check -------------------------------------------------------------
 info_block "Checking for required libraries." 2> /dev/null || source $(dirname ${0})/scripts-library.sh
@@ -56,8 +70,10 @@ info_block "Checking for required libraries." 2> /dev/null || source $(dirname $
 
 ## Main ----------------------------------------------------------------------
 
+if [ "$DISTRO" == "Ubuntu" ]; then
 # Log some data about the instance and the rest of the system
-log_instance_info
+ log_instance_info
+fi
 
 # Ensure that the current kernel can support vxlan
 if ! modprobe vxlan; then
@@ -73,29 +89,37 @@ if [ ! "$(grep -e '^nameserver 8.8.8.8' -e '^nameserver 8.8.4.4' /etc/resolv.con
   echo -e '\n# Adding google name servers\nnameserver 8.8.8.8\nnameserver 8.8.4.4' | tee -a /etc/resolv.conf
 fi
 
+if [ "$DISTRO" == "Ubuntu" ]; then
 # Ensure that the https apt transport is available before doing anything else
-apt-get update && apt-get install -y apt-transport-https
+   apt-get update && apt-get install -y apt-transport-https
+else
+   yum -y install epel-release
+fi
 
-# Set the host repositories to only use the same ones, always, for the sake of consistency.
-cat > /etc/apt/sources.list <<EOF
-# Base repositories
-deb ${UBUNTU_REPO} ${UBUNTU_RELEASE} main restricted universe multiverse
-# Updates repositories
-deb ${UBUNTU_REPO} ${UBUNTU_RELEASE}-updates main restricted universe multiverse
-# Backports repositories
-deb ${UBUNTU_REPO} ${UBUNTU_RELEASE}-backports main restricted universe multiverse
-# Security repositories
-deb ${UBUNTU_SEC_REPO} ${UBUNTU_RELEASE}-security main restricted universe multiverse
+if [ "$DISTRO" == "Ubuntu" ]; then
+ # Set the host repositories to only use the same ones, always, for the sake of consistency.
+ cat > /etc/apt/sources.list <<EOF
+ # Base repositories
+ deb ${UBUNTU_REPO} ${UBUNTU_RELEASE} main restricted universe multiverse
+ # Updates repositories
+ deb ${UBUNTU_REPO} ${UBUNTU_RELEASE}-updates main restricted universe multiverse
+ # Backports repositories
+ deb ${UBUNTU_REPO} ${UBUNTU_RELEASE}-backports main restricted universe multiverse
+ # Security repositories
+ deb ${UBUNTU_SEC_REPO} ${UBUNTU_RELEASE}-security main restricted universe multiverse
 EOF
 
+fi
+
+if [ "$DISTRO" == "Ubuntu" ]; then
 # Update the package cache
-apt-get update
+  apt-get update
 
 # Remove known conflicting packages in the base image
-apt-get purge -y libmysqlclient18 mysql-common
+  apt-get purge -y libmysqlclient18 mysql-common
 
 # Install required packages
-apt-get install -y bridge-utils \
+  apt-get install -y bridge-utils \
                    build-essential \
                    curl \
                    ethtool \
@@ -109,6 +133,26 @@ apt-get install -y bridge-utils \
                    vim \
                    vlan \
                    xfsprogs
+else
+   yum -y update
+   yum -y remove libmysqlclient18 mysql-common
+   yum -y install bridge-utils \
+                   gcc \
+                   gcc-c++ \
+                   make \
+                   openssl-devel \
+                   curl \
+                   ethtool \
+                   git-core \
+                   ipython \
+                   lvm2 \
+                   python2.7 \
+                   python-devel \
+                   tmux \
+                   vim \
+                   vlan \
+                   xfsprogs
+fi
 
 # Flush all the iptables rules set by openstack-infra
 if [ "${FLUSH_IPTABLES}" == "yes" ]; then
@@ -229,26 +273,56 @@ if [ "${DEPLOY_SWIFT}" == "yes" ]; then
   done
 fi
 
+if [ "$DISTRO" == "Ubuntu" ]; then
 # Copy aio network config into place.
-if [ ! -d "/etc/network/interfaces.d" ];then
-  mkdir -p /etc/network/interfaces.d/
-fi
+ if [ ! -d "/etc/network/interfaces.d" ];then
+   mkdir -p /etc/network/interfaces.d/
+ fi
 
 # Copy the basic aio network interfaces over
 cp -R etc/network/interfaces.d/aio_interfaces.cfg /etc/network/interfaces.d/
 
 # Ensure the network source is in place
-if [ ! "$(grep -Rni '^source\ /etc/network/interfaces.d/\*.cfg' /etc/network/interfaces)" ]; then
-    echo "source /etc/network/interfaces.d/*.cfg" | tee -a /etc/network/interfaces
-fi
+ if [ ! "$(grep -Rni '^source\ /etc/network/interfaces.d/\*.cfg' /etc/network/interfaces)" ]; then
+     echo "source /etc/network/interfaces.d/*.cfg" | tee -a /etc/network/interfaces
+ fi
 
 # Bring up the new interfaces
-for i in $(awk '/^iface/ {print $2}' /etc/network/interfaces.d/aio_interfaces.cfg); do
-    if grep "^$i\:" /proc/net/dev > /dev/null;then
-      /sbin/ifdown $i || true
-    fi
-    /sbin/ifup $i || true
-done
+ for i in $(awk '/^iface/ {print $2}' /etc/network/interfaces.d/aio_interfaces.cfg); do
+     if grep "^$i\:" /proc/net/dev > /dev/null;then
+       /sbin/ifdown $i || true
+     fi
+     /sbin/ifup $i || true
+ done
+
+else
+  cp  etc/network/ifcfg-br* /etc/sysconfig/network-scripts/
+  # Bring up the new interfaces
+  for i in br-mgmt br-storage br-vlan br-vlan:0 br-vxlan; do
+      if grep "^$i\:" /proc/net/dev > /dev/null;then
+        /sbin/ifdown $i || true
+        if [ "$i" == "br-vxlan" ]; then
+          /sbin/iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE || true
+        fi
+        if [ "$i" == "br-vlan" ]; then
+          ip link del br-vlan-veth || true
+        fi
+      fi
+        if [ "$i" == "br-vlan" ]; then
+          ip link add br-vlan-veth type veth peer name eth12 || true
+          ip link set br-vlan-veth up
+          ip link set eth12 up
+        fi
+        /sbin/ifup $i || true
+        if [ "$i" == "br-vxlan" ]; then
+          /sbin/iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE || true
+        fi
+        if [ "$i" == "br-vlan" ]; then
+          brctl addif br-vlan br-vlan-veth
+        fi
+  done
+
+fi
 
 # Remove an existing etc directory if already found
 if [ -d "/etc/openstack_deploy" ];then
@@ -258,7 +332,12 @@ fi
 # Move the *.aio files into place for use within the AIO build.
 cp -R etc/openstack_deploy /etc/
 for i in $(find /etc/openstack_deploy/ -type f -name '*.aio');do
-  rename 's/\.aio$//g' $i
+  if [ "$DISTRO" == "Ubuntu" ]; then
+    rename 's/\.aio$//g' $i
+  else
+    NAME2=$(echo $i | sed 's/\.aio$//g')
+    mv $i $NAME2
+  fi
 done
 
 # Ensure the conf.d directory exists
@@ -295,13 +374,26 @@ for container_type in keystone galera rabbit_mq horizon repo; do
 done
 
 if [ ${DEPLOY_CEILOMETER} == "yes" ]; then
-  # Install mongodb on the aio1 host
-  apt-get install mongodb-server mongodb-clients python-pymongo -y
-  # Change bind_ip to management ip
-  sed -i "s/^bind_ip.*/bind_ip = $MONGO_HOST/" /etc/mongodb.conf
-  # Asserting smallfiles key
-  sed -i "s/^smallfiles.*/smallfiles = true/" /etc/mongodb.conf
-  service mongodb restart
+  if [ "$DISTRO" == "Ubuntu" ]; then
+    # Install mongodb on the aio1 host
+    apt-get install mongodb-server mongodb-clients python-pymongo -y
+  else
+    cp etc/yum/mongodb.repo /etc/yum.repos.d/
+    yum -y install mongodb-org python-pymongo
+  fi
+  if [ "$DISTRO" == "Ubuntu" ]; then
+    # Change bind_ip to management ip
+    sed -i "s/^bind_ip.*/bind_ip = $MONGO_HOST/" /etc/mongodb.conf
+    # Asserting smallfiles key
+    sed -i "s/^smallfiles.*/smallfiles = true/" /etc/mongodb.conf
+    service mongodb restart
+  else
+    # Change bind_ip to management ip
+    sed -i "s/^bind_ip.*/bind_ip = $MONGO_HOST/" /etc/mongod.conf
+    # Asserting smallfiles key
+    sed -i "s/^smallfiles.*/smallfiles = true/" /etc/mongod.conf
+    service mongod restart
+  fi
 
   # Wait for mongodb to restart
   for i in {1..12}; do
@@ -400,7 +492,9 @@ if [ "${TEMPEST_FATAL_DEPRECATIONS}" == "yes" ]; then
   echo "tempest_fatal_deprecations: True" | tee -a /etc/openstack_deploy/user_variables.yml
 fi
 
+if [ "$DISTRO" == "Ubuntu" ]; then
 # Log some data about the instance and the rest of the system
-log_instance_info
+ log_instance_info
+fi
 
 info_block "The system has been prepared for an all-in-one build."

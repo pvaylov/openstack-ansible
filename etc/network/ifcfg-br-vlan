@@ -1,0 +1,7 @@
+TYPE=Bridge
+BOOTPROTO=none
+NAME=br-vlan
+DEVICE=br-vlan
+ONBOOT=yes
+IPADDR=172.29.248.100
+PREFIX=24

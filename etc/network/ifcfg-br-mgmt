@@ -1,0 +1,7 @@
+TYPE=Bridge
+BOOTPROTO=none
+NAME=br-mgmt
+DEVICE=br-mgmt
+ONBOOT=yes
+IPADDR=172.29.236.100
+PREFIX=24

@@ -1,0 +1,7 @@
+TYPE=Bridge
+BOOTPROTO=none
+NAME=br-storage
+DEVICE=br-storage
+ONBOOT=yes
+IPADDR=172.29.244.100
+PREFIX=24
