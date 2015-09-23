@@ -21,6 +21,7 @@
   until: apt_update|success
   retries: 5
   delay: 2
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - openstack-apt-packages
 
@@ -33,5 +34,20 @@
   retries: 5
   delay: 2
   with_items: openstack_host_apt_packages
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - openstack-apt-packages
+
+- name: Install host packages
+  yum:
+    pkg: "{{ item }}"
+    state: present
+  register: install_packages
+  until: install_packages|success
+  retries: 5
+  delay: 2
+  with_items: openstack_host_apt_packages_centos
+  when: ansible_distribution == 'CentOS'
+  tags:
+    - openstack-yum-packages
+

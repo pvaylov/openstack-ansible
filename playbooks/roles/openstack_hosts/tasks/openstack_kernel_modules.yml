@@ -18,6 +18,16 @@
     name: "{{ item }}"
   with_items: openstack_host_kernel_modules
   when: openstack_host_kernel_modules is defined
+  when: ansible_distribution == 'Ubuntu'
+  tags:
+    - openstack-host-kernel-modules
+
+- name: "Ensure kernel module(s)"
+  modprobe:
+    name: "{{ item }}"
+  with_items: openstack_host_kernel_modules_centos
+  when: openstack_host_kernel_modules is defined
+  when: ansible_distribution == 'CentOS'
   tags:
     - openstack-host-kernel-modules
 
@@ -27,5 +37,6 @@
     line: "{{ item }}"
   with_items: openstack_host_kernel_modules
   when: openstack_host_kernel_modules is defined
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - openstack-host-kernel-modules

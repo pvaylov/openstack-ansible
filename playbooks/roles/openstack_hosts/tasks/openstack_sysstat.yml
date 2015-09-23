@@ -22,5 +22,19 @@
     - { src: "sysstat.default.j2", dest: "/etc/default/sysstat" }
     - { src: "sysstat.cron.j2", dest: "/etc/cron.d/sysstat", mode: "0755" }
   notify: Restart sysstat
+  when: ansible_distribution == 'Ubuntu'
+  tags:
+    - openstack-host-sysstat
+
+- name: Enable sysstat
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    mode: "{{ item.mode|default('0644')}}"
+  with_items:
+    - { src: "sysstat.default.j2", dest: "/etc/default/sysstat" }
+    - { src: "sysstat.cron.centos.j2", dest: "/etc/cron.d/sysstat", mode: "0755" }
+  notify: Restart sysstat
+  when: ansible_distribution == 'CentOS'
   tags:
     - openstack-host-sysstat

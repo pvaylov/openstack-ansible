@@ -49,6 +49,28 @@ openstack_host_kernel_modules:
   - vhost_net
   - x_tables
 
+openstack_host_kernel_modules_centos:
+  - 8021q
+  - dm_multipath
+  - dm_snapshot
+  - ip6table_filter
+  - ip6_tables
+  - ip_tables
+  - ipt_MASQUERADE
+  - ipt_REJECT
+  - iptable_filter
+  - iptable_mangle
+  - iptable_nat
+  - iscsi_tcp
+  - nf_conntrack
+  - nf_conntrack_ipv4
+  - nf_defrag_ipv4
+  - nf_nat
+  - nf_nat_ipv4
+  - scsi_dh
+  - vhost_net
+  - x_tables
+
 ## Base packages
 openstack_host_apt_packages:
   - apparmor-utils
@@ -73,6 +95,31 @@ openstack_host_apt_packages:
   - sysstat
   - time
   - vlan
+  - wget
+
+openstack_host_apt_packages_centos:
+  - epel-release
+  - python-libguestfs
+  - bridge-utils
+  - gcc
+  - gcc-c++
+  - make
+  - openssl-devel
+  - curl
+  - device-mapper-event
+  - dstat
+  - htop
+  - iptables
+  - irqbalance
+  - kmod-devel
+  - kmod-libs
+  - lvm2
+  - python-devel
+  - rsync
+  - rsyslog
+  - sshpass
+  - sysstat
+  - time
   - wget
 
 # The following garbage collection values are set to better support lots of neutron networks/routers.
