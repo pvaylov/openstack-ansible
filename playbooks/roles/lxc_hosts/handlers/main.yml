@@ -15,11 +15,13 @@
 
 - name: Load lxc-openstack apparmor profile
   command: apparmor_parser -Kr /etc/apparmor.d/lxc-containers
+  when: ansible_distribution == 'Ubuntu'
 
 - name: Restart apparmor
   service:
     name: "apparmor"
     state: "restarted"
+  when: ansible_distribution == 'Ubuntu'
 
 - name: Init reload
   command: "initctl reload-configuration"

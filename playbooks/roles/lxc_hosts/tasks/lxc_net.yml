@@ -18,6 +18,7 @@
     dest: "/etc/network/interfaces"
     line: "source /etc/network/interfaces.d/*.cfg"
     backup: "yes"
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - lxc-net
     - lxc-interfaces
@@ -45,9 +46,31 @@
   with_items:
     - { src: lxc-net-bridge.cfg.j2, dest: "/etc/network/interfaces.d/lxc-net-bridge.cfg" }
   when: bridge_check.state == "absent"
+  when: ansible_distribution == 'Ubuntu'
   notify:
     - Bring bridge up
   tags:
     - lxc-files
     - lxc-net
     - lxc-bridge
+
+- name: Drop lxc net bridge
+  template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: "{{ item.owner|default('root') }}"
+    group: "{{ item.group|default('root') }}"
+    mode: "{{ item.mode|default('0644') }}"
+  with_items:
+    - { src: lxc-net-bridge.centos.j2, dest: "/etc/sysconfig/network-scripts/ifcfg-{{ lxc_net_bridge }}" }
+    - { src: ifup-br.j2, dest: "/etc/sysconfig/network-scripts/ifup-{{ lxc_net_bridge }}" }
+    - { src: ifdown-br.j2, dest: "/etc/sysconfig/network-scripts/ifdown-{{ lxc_net_bridge }}" }
+  when: bridge_check.state == "absent"
+  when: ansible_distribution == 'CentOS'
+  notify:
+    - Bring bridge up
+  tags:
+    - lxc-files
+    - lxc-net
+    - lxc-bridge
+

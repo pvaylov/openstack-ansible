@@ -1,0 +1,7 @@
+# {{ ansible_managed }}
+
+{% if lxc_net_nat == "true" %}
+/usr/local/bin/lxc-system-manage iptables-remove
+{% endif %}
+/usr/local/bin/lxc-system-manage dnsmasq-stop
+/usr/local/bin/lxc-system-manage iptables-remove

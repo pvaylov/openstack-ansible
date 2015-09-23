@@ -1,0 +1,14 @@
+# {{ ansible_managed }}
+TYPE=Bridge
+BOOTPROTO=none
+NAME={{ lxc_net_bridge }}
+DEVICE={{ lxc_net_bridge }}
+ONBOOT=yes
+IPADDR={{ lxc_net_address }}
+NETMASK={{ lxc_net_netmask }}
+{% if lxc_net_nat == "true" %}
+{% if lxc_net_gateway != "none" %}
+GATEWAY{{ lxc_net_gateway }}
+{% endif %}
+{% endif %}
+STP=off

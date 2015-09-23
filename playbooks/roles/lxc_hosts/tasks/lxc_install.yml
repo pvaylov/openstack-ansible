@@ -21,6 +21,7 @@
   until: apt_update|success
   retries: 5
   delay: 2
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - lxc-apt-packages
 
@@ -33,8 +34,22 @@
   retries: 5
   delay: 2
   with_items: lxc_apt_packages
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - lxc-apt-packages
+
+- name: Install yum packages
+  yum:
+    pkg: "{{ item }}"
+    state: present
+  register: install_packages
+  until: install_packages|success
+  retries: 5
+  delay: 2
+  with_items: lxc_yum_packages
+  when: ansible_distribution == 'CentOS'
+  tags:
+    - lxc-yum-packages
 
 # The functionality with changing the container cache has been added into the
 # upstream LXC templates with patch [ https://github.com/lxc/lxc/pull/558 ]

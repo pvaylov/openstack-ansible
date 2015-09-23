@@ -1,0 +1,12 @@
+# {{ ansible_managed }}
+
+{% if lxc_net_nat == "true" %}
+    # nat rules start and stop
+/usr/local/bin/lxc-system-manage iptables-create
+{% endif %}
+    # dnsmasq start and stop
+/usr/local/bin/lxc-system-manage dnsmasq-start || true
+/usr/local/bin/lxc-system-manage iptables-create
+{% if lxc_net_bridge_port %}    
+brctl addif {{ lxc_net_bridge }} {{ lxc_net_bridge_port }}
+{% endif %}
