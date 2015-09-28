@@ -32,12 +32,14 @@
   tags:
     - rsyslog-client-config
 
+## Fix it for CentOS!!!
 - name: Find all log files
   shell: |
     find -L '{{ rsyslog_client_log_dir }}' -type f -name '*.log'
   register: log_files
   when: >
     rsyslog_client_log_dir is defined
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - rsyslog-client-config
 
@@ -51,6 +53,7 @@
     - { src: "99-rsyslog.conf.j2", dest: "/etc/rsyslog.d/{{ rsyslog_client_config_name }}" }
     - { src: "os_aggregate_storage.j2", dest: "/etc/logrotate.d/os_aggregate_storage" }
     - { src: "rsyslog.conf.j2", dest: "/etc/rsyslog.conf" }
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - rsyslog-client-config
 

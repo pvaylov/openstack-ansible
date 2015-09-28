@@ -19,5 +19,6 @@
     state: "directory"
     owner: "syslog"
     group: "adm"
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - rsyslog-client-dirs

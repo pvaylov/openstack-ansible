@@ -71,6 +71,7 @@ lxc_yum_packages:
   - virt-install
   - epel-release
   - bridge-utils
+  - debootstrap
   - lxc
   - lxc-libs
   - lxc-templates
