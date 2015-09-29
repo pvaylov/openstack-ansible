@@ -21,6 +21,7 @@
   until: apt_update|success
   retries: 5
   delay: 2
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - haproxy-apt-packages
 
@@ -33,6 +34,20 @@
   retries: 5
   delay: 2
   with_items: haproxy_apt_packages
+  when: ansible_distribution == 'Ubuntu'
+  tags:
+    - haproxy-apt-packages
+
+- name: Install HAProxy Packages
+  yum:
+    pkg: "{{ item }}"
+    state: latest
+  register: install_packages
+  until: install_packages|success
+  retries: 5
+  delay: 2
+  with_items: haproxy_yum_packages
+  when: ansible_distribution == 'CentOS'
   tags:
     - haproxy-apt-packages
 

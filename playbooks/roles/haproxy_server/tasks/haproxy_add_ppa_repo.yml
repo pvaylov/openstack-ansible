@@ -21,6 +21,7 @@
   until: apt_update|success
   retries: 5
   delay: 2
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - haproxy-apt-packages
 
@@ -33,6 +34,7 @@
   retries: 5
   delay: 2
   with_items: haproxy_pre_apt_packages
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - haproxy-pre-apt-packages
 
@@ -47,6 +49,7 @@
   retries: 5
   delay: 2
   with_items: haproxy_gpg_keys
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - haproxy-apt-keys
 
@@ -61,6 +64,7 @@
   delay: 2
   with_items: haproxy_gpg_keys
   when: add_keys|failed and item.fallback_keyserver is defined
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - haproxy-apt-keys
 
@@ -71,6 +75,7 @@
     owner: "root"
     group: "root"
     mode: "0644"
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - haproxy-repo-pin
 
@@ -82,5 +87,6 @@
   until: add_repos|success
   retries: 5
   delay: 2
+  when: ansible_distribution == 'Ubuntu'
   tags:
     - haproxy-repos
