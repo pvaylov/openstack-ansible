@@ -93,6 +93,7 @@ if [ "$DISTRO" == "Ubuntu" ]; then
 # Ensure that the https apt transport is available before doing anything else
    apt-get update && apt-get install -y apt-transport-https
 else
+# pvaylov: Need to check if distro is Centos.
    yum -y install epel-release
 fi
 
@@ -134,6 +135,7 @@ if [ "$DISTRO" == "Ubuntu" ]; then
                    vlan \
                    xfsprogs
 else
+# pvaylov: Need to check if distro is Centos.
    yum -y update
    yum -y remove libmysqlclient18 mysql-common
    yum -y install bridge-utils \
@@ -296,6 +298,7 @@ cp -R etc/network/interfaces.d/aio_interfaces.cfg /etc/network/interfaces.d/
  done
 
 else
+# pvaylov: Need to check if distro is Centos.
   cp  etc/network/ifcfg-br* /etc/sysconfig/network-scripts/
   # Bring up the new interfaces
   for i in br-mgmt br-storage br-vlan br-vlan:0 br-vxlan; do
@@ -442,10 +445,11 @@ echo 'galera_wsrep_provider_options:
 # Set the running kernel as the required kernel
 echo "required_kernel: $(uname --kernel-release)" | tee -a /etc/openstack_deploy/user_variables.yml
 
-# Set the Ubuntu apt repository used for containers to the same as the host
-echo "lxc_container_template_main_apt_repo: ${UBUNTU_REPO}" | tee -a /etc/openstack_deploy/user_variables.yml
-echo "lxc_container_template_security_apt_repo: ${UBUNTU_SEC_REPO}" | tee -a /etc/openstack_deploy/user_variables.yml
-
+# pvaylov: Need rewrite following accordig to Centos containers
+## Set the Ubuntu apt repository used for containers to the same as the host
+#echo "lxc_container_template_main_apt_repo: ${UBUNTU_REPO}" | tee -a /etc/openstack_deploy/user_variables.yml
+#echo "lxc_container_template_security_apt_repo: ${UBUNTU_SEC_REPO}" | tee -a /etc/openstack_deploy/user_variables.yml
+#
 # Set the running neutron workers to 0/1
 echo "neutron_api_workers: 0" | tee -a /etc/openstack_deploy/user_variables.yml
 echo "neutron_rpc_workers: 0" | tee -a /etc/openstack_deploy/user_variables.yml
