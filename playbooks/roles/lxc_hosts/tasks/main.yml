@@ -18,7 +18,7 @@
 - include: lxc_net.yml
 - include: lxc_install.yml
 - include: lxc_dnsmasq_cleanup.yml
-- include: lxc_cache.yml
-  when: lxc_container_caches is defined
+#- include: lxc_cache.yml
+#  when: lxc_container_caches is defined
 - name: Flush handlers
   meta: flush_handlers

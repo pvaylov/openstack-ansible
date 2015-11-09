@@ -1,0 +1,14 @@
+---
+
+# Resets the container user's password using lxc_container because Python2.7
+#  may not be installed at this point.
+- name: Force container user password set
+  lxc_container:
+    name: "{{ inventory_hostname }}"
+    container_command: |
+      getent passwd "{{ lxc_container_user_name }}" &&
+      echo "{{ lxc_container_user_name }}:{{ lxc_container_user_password }}" | chpasswd
+  delegate_to: "{{ physical_host }}"
+  no_log: True
+  tags:
+    - lxc-container-user-password-regen

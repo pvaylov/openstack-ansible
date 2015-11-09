@@ -16,7 +16,8 @@
 lxc_container_config: /etc/lxc/lxc-openstack.conf
 
 # Default container template to build from
-lxc_container_template: ubuntu
+#lxc_container_template: ubuntu
+lxc_container_template: centos
 
 # lxc container rootfs directory and cache path
 lxc_container_directory: "/var/lib/lxc"
@@ -32,14 +33,16 @@ lxc_container_fs_type: ext4
 lxc_container_backing_store: lvm
 lxc_container_vg_name: lxc
 
+# pvaylov: need change following fo Centos
 # Default image to build from
-lxc_container_release: trusty
-lxc_container_user_name: ubuntu
+#lxc_container_release: trusty
+#lxc_container_user_name: ubuntu
+lxc_container_user_name: root
 lxc_container_user_password: "{{ lookup('pipe', 'date --rfc-3339=ns | sha512sum | base64 | head -c 32') }}"
-lxc_container_template_options: >
-  --release {{ lxc_container_release }}
-  --user {{ lxc_container_user_name }}
-  --password {{ lxc_container_user_password }}
+#lxc_container_template_options: >
+#  --release {{ lxc_container_release }}
+#  --user {{ lxc_container_user_name }}
+#  --password {{ lxc_container_user_password }}
 
 lxc_container_template_main_apt_repo: "https://mirror.rackspace.com/ubuntu"
 lxc_container_template_security_apt_repo: "https://mirror.rackspace.com/ubuntu"
@@ -54,6 +57,11 @@ lxc_container_default_interfaces: |
   # Load any additional configs
   source /etc/network/interfaces.d/*.cfg
 
+lxc_container_default_interfaces_centos: |
+  DEVICE=eth0
+  BOOTPROTO=dhcp
+  ONBOOT=yes
+  
 # The container interface variable is a a default object that assume the
 # Ansible iterator type is `with_dict`.
 lxc_container_interface: |
@@ -73,5 +81,23 @@ lxc_container_interface: |
   {% endif %}
   {% else %}
   iface {{ item.value.interface }} inet manual
+  {% endif %}
+  ### end generated network for [ {{ item.value.interface }} ] ###
+
+lxc_container_interface_centos: |
+  ### start generated network for [ {{ item.value.interface }} ] ###
+  DEVICE={{ item.value.interface }}
+  {% if item.value.address is defined %}
+  BOOTPROTO=none
+  IPADDR={{ item.value.address }}
+  NETMASK={{ item.value.netmask }}
+  ONBOOT=yes
+  {% if item.value.gateway is defined %}
+  GATEWAY={{ item.value.gateway }}
+  {% endif %}
+  {% else %}
+  DEVICE={{ item.value.interface }}
+  BOOTPROTO=none
+  ONBOOT=yes
   {% endif %}
   ### end generated network for [ {{ item.value.interface }} ] ###
