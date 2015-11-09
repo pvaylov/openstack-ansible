@@ -23,6 +23,7 @@
   delay: 2
   tags:
     - memcached-apt-packages
+  when: ansible_distribution == 'Ubuntu'
 
 - name: Install apt packages
   apt:
@@ -35,3 +36,17 @@
   with_items: memcached_apt_packages
   tags:
     - memcached-apt-packages
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Install yum packages
+  yum:
+    name: "{{ item }}"
+    state: present
+  register: install_packages
+  until: install_packages|success
+  retries: 5
+  delay: 2
+  with_items: memcached_yum_packages
+  tags:
+    - memcached-yum-packages
+  when: ansible_distribution == 'CentOS'

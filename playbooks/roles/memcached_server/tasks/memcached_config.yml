@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-- name: Apply memcached config
+- name: Apply memcached config Ubuntu
   template:
     src: "memcached.conf"
     dest: "/etc/memcached.conf"
@@ -23,6 +23,19 @@
   notify: Restart memcached
   tags:
     - memcached-config
+  when: ansible_distribution == 'Ubuntu'
+
+- name: Apply memcached config CentOS
+  template:
+    src: "memcached_centos.conf"
+    dest: "/etc/sysconfig/memcached"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+  notify: Restart memcached
+  tags:
+    - memcached-config
+  when: ansible_distribution == 'CentOS'
 
 - name: Apply resource limits
   template:

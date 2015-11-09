@@ -16,5 +16,6 @@
 - name: Restart memcached
   service:
     name: "memcached"
+    enabled: "yes"
     state: "restarted"
     pattern: "memcached"
